@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="description" content="Weekz — a calm, colorful weekly routine planner." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Weekz" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/weekz-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <title>Weekz</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0b0d12;
+      color: #e5e7eb;
+      min-height: 100vh;
+      padding: 16px;
+      padding-bottom: 40px;
+    }
+
+    /* Header */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1100px;
+      margin: 0 auto 24px;
+      padding: 0 4px;
+    }
+
+    .logo-area {
+      text-align: left;
+    }
+
+    .logo {
+      font-size: 1.9rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tagline {
+      color: #9ca3af;
+      font-size: 0.85rem;
+      margin-top: 2px;
+    }
+
+    .settings-btn {
+      background: #1a1f2e;
+      border: 1px solid #2d3340;
+      color: #e5e7eb;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .settings-btn:active {
+      background: #252b3b;
+    }
+
+    /* ===== WEEK VIEW ===== */
+    .week-container {
+      display: grid;
+      gap: 12px;
+      max-width: 1100px;
+      margin: 0 auto 30px;
+    }
+
+    @media (min-width: 800px) {
+      .week-container {
+        grid-template-columns: repeat(7, 1fr);
+      }
+    }
+
+    @media (max-width: 799px) {
+      .week-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .day-card {
+      background: #151821;
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 2px solid transparent;
+      min-height: 110px;
+    }
+
+    .day-card:hover, .day-card:active {
+      border-color: #3b82f6;
+      background: #1a1f2e;
+    }
+
+    .day-name {
+      font-weight: 600;
+      font-size: 1.15rem;
+      margin-bottom: 12px;
+    }
+
+    .day-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .preview-event {
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: white;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== DAY DETAIL ===== */
+    .day-detail {
+      display: none;
+      max-width: 640px;
+      margin: 0 auto;
+      background: #151821;
+      border-radius: 20px;
+      padding: 20px;
+      border: 1px solid #2d3340;
+    }
+
+    .day-detail.visible {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .detail-header h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .back-btn {
+      background: #374151;
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .back-btn:active {
+      background: #4b5563;
+    }
+
+    .timeline-wrapper {
+      position: relative;
+      height: 720px;
+      background: #0f1219;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #2d3340;
+    }
+
+    .hour-lines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .hour-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #1f2430;
+    }
+
+    .hour-label {
+      position: absolute;
+      left: 8px;
+      font-size: 0.7rem;
+      color: #6b7280;
+      transform: translateY(-50%);
+      background: #0f1219;
+      padding: 0 4px;
+    }
+
+    .events-layer {
+      position: absolute;
+      top: 0;
+      left: 52px;
+      right: 10px;
+      bottom: 0;
+    }
+
+    .event-block {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: white;
+      overflow: hidden;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    .event-block:active {
+      opacity: 0.9;
+    }
+
+    .event-time {
+      font-size: 0.7rem;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .add-bar {
+      margin-top: 18px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .add-btn {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 280px;
+    }
+
+    .add-btn:active {
+      opacity: 0.9;
+    }
+
+    /* ===== MODALS (Edit + Settings) ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal {
+      background: #1a1f2e;
+      border-radius: 18px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #2d3340;
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal h3 {
+      font-size: 1.2rem;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      background: #0f1219;
+      border: 1px solid #374151;
+      color: white;
+      padding: 11px 13px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .time-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+    }
+
+    .btn-delete {
+      background: #7f1d1d;
+      color: white;
+    }
+
+    .btn-cancel {
+      background: #374151;
+      color: white;
+    }
+
+    .btn-save:active, .btn-delete:active, .btn-cancel:active {
+      opacity: 0.85;
+    }
+
+    /* Settings specific */
+    .settings-section {
+      margin-bottom: 20px;
+    }
+
+    .settings-section p {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      line-height: 1.45;
+      margin-bottom: 12px;
+    }
+
+    .danger-btn {
+      background: #7f1d1d;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .danger-btn:active {
+      opacity: 0.85;
+    }
+
+    .settings-footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    /* Recibin-inspired, responsive Weekz UI */
+    :root {
+      color-scheme: dark;
+      --bg: #090d18;
+      --backdrop-glow-one: #354a9a;
+      --backdrop-glow-two: #653d91;
+      --panel: #141a28;
+      --panel-raised: #1b2232;
+      --line: #ffffff19;
+      --text: #f5f8f7;
+      --muted: #a9b5b2;
+      --accent: #52d6b4;
+      --accent-soft: #52d6b420;
+      --accent-line: #52d6b477;
+      --shadow: 0 24px 70px #0008;
+    }
+    body {
+      min-height: 100svh;
+      padding: max(18px, env(safe-area-inset-top)) 18px calc(36px + env(safe-area-inset-bottom));
+      color: var(--text);
+      position: relative;
+      isolation: isolate;
+      background: var(--bg);
+      font: 15px/1.48 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      overscroll-behavior-y: none;
+    }
+    body::before {
+      content: ""; position: fixed; z-index: -1; inset: -70px; pointer-events: none;
+      background: radial-gradient(ellipse at 50% -24%, color-mix(in srgb, var(--backdrop-glow-one) 65%, transparent), transparent 58%), radial-gradient(ellipse at 95% 58%, color-mix(in srgb, var(--backdrop-glow-two) 48%, transparent), transparent 46%);
+      filter: blur(38px); transition: background .25s ease;
+    }
+    :root[data-backdrop="aqua"] { --backdrop-glow-one: #236d67; --backdrop-glow-two: #34795d; }
+    .app-header,.hero,.week-container,.day-detail { width: min(100%, 1180px); }
+    .app-header { margin-bottom: 20px; }
+    .logo { display:inline-block; font-size:25px; letter-spacing:-1px; background:none; color:var(--accent); -webkit-background-clip:border-box; background-clip:border-box; -webkit-text-fill-color:var(--accent); text-shadow:0 2px 20px var(--accent-soft); }
+    .brand-lockup { display:flex;align-items:center;gap:12px; }
+    .brand-mark { width:48px;height:48px;flex:none;display:grid;place-items:center;border:1px solid #ffffff55;border-radius:16px;background:var(--accent);box-shadow:0 9px 28px var(--accent-soft),inset 0 1px 0 #ffffff80; }
+    .brand-mark svg { width:44px;height:44px;overflow:visible; }
+    .tagline { color: var(--muted); font-size: 13px; }
+    .settings-btn { color: var(--text); border: 1px solid var(--line); background: #ffffff09; border-radius: 14px; transition: .2s; }
+    .settings-btn:hover { border-color: var(--accent-line); background: var(--accent-soft); transform: translateY(-1px); }
+    .hero { margin: 0 auto 20px; padding: 21px 23px; border: 1px solid var(--line); border-radius: 22px; background: radial-gradient(ellipse at 8% 0, var(--accent-soft), transparent 47%), linear-gradient(145deg, #1b2222, #111517 72%); box-shadow: var(--shadow); }
+    .hero-kicker { color: var(--accent); text-transform: uppercase; letter-spacing: 1.7px; font-size: 10px; font-weight: 850; }
+    .hero h1 { margin: 4px 0 2px; font-size: clamp(22px, 3vw, 30px); line-height: 1.15; letter-spacing: -1px; }
+    .hero p { color: var(--muted); font-size: 13px; }
+    .week-container { grid-template-columns: 1fr; gap: 11px; margin-bottom: 30px; }
+    .day-card { position: relative; min-width: 0; min-height: 124px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(140deg,#14312d,#0c201d); box-shadow: 0 10px 28px #0003; }
+    .day-card:hover,.day-card:active { border-color: var(--accent-line); background: linear-gradient(120deg, var(--accent-soft), #ffffff04); }
+    .day-name { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:11px; font-size:15px; font-weight:800; }
+    .day-name::after { content: attr(data-count); color:var(--muted); font-size:11px; font-weight:600; }
+    .day-preview { gap:6px; }
+    .preview-event { padding:6px 9px; border:1px solid #ffffff12; border-radius:9px; font-size:11px; }
+    .day-empty { color:var(--muted); font-size:12px; }
+    .day-detail { padding:19px; border:1px solid var(--line); border-radius:22px; background:linear-gradient(145deg,#15312d,#0d201e); box-shadow:var(--shadow); }
+    .day-open .app-header,.day-open .hero { display:none; }
+    .detail-header h2 { font-size:24px; letter-spacing:-.7px; }
+    .back-btn,.btn-cancel { border:1px solid var(--line); background:#ffffff0a; color:var(--text); border-radius:12px; }
+    .timeline-wrapper { height:720px; border-color:var(--line); border-radius:17px; background:#091b19; }
+    .hour-line { background:#ffffff0d; }
+    .hour-label { color:#9db3ae; background:#091b19; }
+    .event-block { border:1px solid #ffffff22; border-radius:11px; box-shadow:0 8px 22px #0004; }
+    .add-btn,.btn-save { color:#062019; background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 77%,white),var(--accent)); box-shadow:0 9px 28px var(--accent-soft); }
+    .add-btn { max-width:330px; min-height:49px; border-radius:14px; font-weight:800; }
+    .modal-overlay { background:#000a; backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px); }
+    .modal { max-height:min(88svh,760px); overflow:auto; border:1px solid var(--line); border-radius:21px; background:linear-gradient(145deg,#18312d,#0e1d1b); box-shadow:var(--shadow); }
+    .modal h3 { font-size:22px; letter-spacing:-.6px; }
+    .form-group label { color:var(--muted); }
+    .form-group input,.form-group textarea { border-color:var(--line); background:#0d1112; color:var(--text); border-radius:12px; }
+    .form-group input:focus,.form-group textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+    .btn-save,.btn-delete,.btn-cancel { min-height:45px; border-radius:12px; }
+    .btn-delete,.danger-btn { border:1px solid #ff767644; background:#ff767614; color:#ffc4c4; }
+    .settings-section p { color:var(--muted); }
+    .settings-footer { color:var(--muted); }
+    .accent-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:13px 14px; border:1px solid var(--line); border-radius:14px; background:#ffffff06; }
+    .accent-row strong,.accent-row small { display:block; }
+    .accent-row small { margin-top:3px; color:var(--muted); font-size:12px; }
+    .accent-picker { width:48px; height:42px; padding:3px; border:1px solid var(--line); border-radius:11px; background:#101415; cursor:pointer; }
+    .backdrop-select { min-width:138px; min-height:42px; padding:0 12px; border:1px solid var(--line); border-radius:11px; background:#101522; color:var(--text); font:inherit; cursor:pointer; }
+    .switch-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:13px 14px; border:1px solid var(--line); border-radius:14px; background:#ffffff06; }
+    .switch-row strong,.switch-row small { display:block; }
+    .switch-row small { margin-top:3px; color:var(--muted); font-size:12px; }
+    .switch-control { position:relative; width:48px; height:28px; flex:none; appearance:none; -webkit-appearance:none; border:1px solid var(--line); border-radius:999px; background:#343d3c; cursor:pointer; transition:background .2s,border-color .2s; }
+    .switch-control::after { content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 7px #0006; transition:transform .2s; }
+    .switch-control:checked { background:var(--accent); border-color:var(--accent); }
+    .switch-control:checked::after { transform:translateX(20px); background:#08221b; }
+    .support-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+    .support-link { display:flex; align-items:center; justify-content:center; gap:8px; min-height:46px; padding:10px; border:1px solid var(--line); border-radius:13px; color:var(--text); background:#ffffff08; text-decoration:none; font-size:13px; font-weight:750; transition:.2s; }
+    .support-link:hover { border-color:var(--accent-line); background:var(--accent-soft); transform:translateY(-1px); }
+    .support-link.primary { color:#062019; border-color:transparent; background:var(--accent); }
+    button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+    @media(min-width:640px) and (max-width:999px) { .week-container { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    @media(min-width:1000px) { body { padding-left:30px; padding-right:30px; } .week-container { grid-template-columns:repeat(7,minmax(0,1fr)); gap:12px; } .day-card { min-height:220px; } .day-name { min-height:36px; align-items:flex-start; } .day-preview { max-height:162px; overflow:auto; } }
+    @media(max-width:639px) { body { padding-left:14px; padding-right:14px; } .app-header { margin-bottom:16px; } .hero { padding:18px; border-radius:19px; } .week-container { grid-template-columns:1fr; } .day-card { min-height:102px; } .day-detail { padding:14px; } .timeline-wrapper { height:690px; } .events-layer { left:48px; right:7px; } .modal { padding:20px; } }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; scroll-behavior:auto!important; } }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="app-header">
+    <div class="brand-lockup">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" role="presentation">
+          <rect x="8" y="13" width="46" height="42" rx="6" fill="#fff" />
+          <path d="M8 25h46" stroke="var(--accent)" stroke-width="3" />
+          <path d="M20 9v12M42 9v12" stroke="#fff" stroke-width="5" stroke-linecap="round" />
+          <g fill="var(--accent)">
+            <rect x="15" y="31" width="6" height="6" rx="1.5" />
+            <rect x="26" y="31" width="6" height="6" rx="1.5" />
+            <rect x="37" y="31" width="6" height="6" rx="1.5" />
+            <rect x="15" y="41" width="6" height="6" rx="1.5" />
+            <rect x="26" y="41" width="6" height="6" rx="1.5" />
+          </g>
+          <circle cx="46" cy="45" r="13" fill="#fff" stroke="var(--accent)" stroke-width="2" />
+          <path d="m39 45 5 5 9-11" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <div class="logo-area">
+        <div class="logo">Weekz</div>
+        <div class="tagline">Your weekly routine, at a glance</div>
+      </div>
+    </div>
+    <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
+  </div>
+
+  <section class="hero" aria-labelledby="heroTitle">
+    <div class="hero-kicker">A calmer week starts here</div>
+    <h1 id="heroTitle">Make room for what matters.</h1>
+    <p>Tap a day to shape your routine, one block at a time.</p>
+  </section>
+
+  <!-- WEEK VIEW -->
+  <div class="week-container" id="weekView"></div>
+
+  <!-- DAY DETAIL -->
+  <div class="day-detail" id="dayDetail">
+    <div class="detail-header">
+      <h2 id="detailTitle">Monday</h2>
+      <button class="back-btn" onclick="closeDay()">← Back</button>
+    </div>
+
+    <div class="timeline-wrapper">
+      <div class="hour-lines" id="hourLines"></div>
+      <div class="events-layer" id="eventsLayer"></div>
+    </div>
+
+    <div class="add-bar">
+      <button class="add-btn" onclick="openAddModal()">+ Add to Routine</button>
+    </div>
+  </div>
+
+  <!-- EDIT / ADD MODAL -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h3 id="modalTitle">Edit Event</h3>
+
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="modalName" placeholder="Breakfast, Gym, Deep Work..." />
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="modalNotes" placeholder="Optional notes..."></textarea>
+      </div>
+
+      <div class="time-row">
+        <div class="form-group">
+          <label>Start</label>
+          <input type="time" id="modalStart" />
+        </div>
+        <div class="form-group">
+          <label>End</label>
+          <input type="time" id="modalEnd" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Color</label>
+        <input type="color" id="modalColor" value="#3b82f6" style="height:44px; padding:4px;" />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-delete" id="deleteBtn" onclick="deleteEvent()">Delete</button>
+        <button class="btn-save" onclick="saveEvent()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+      <h3>Settings</h3>
+
+      <div class="settings-section">
+        <p>Weekz is a simple weekly routine planner. Your routines repeat every week — no dates, no calendar noise.</p>
+      </div>
+
+      <div class="settings-section">
+        <label class="accent-row" for="backdropPicker">
+          <span><strong>Background style</strong><small>Choose the blurred color glow behind the app.</small></span>
+          <select class="backdrop-select" id="backdropPicker" aria-label="Choose background style"><option value="midnight">Midnight</option><option value="aqua">Aqua garden</option></select>
+        </label>
+      </div>
+
+      <div class="settings-section">
+        <label class="accent-row" for="accentPicker">
+          <span><strong>App accent</strong><small>Choose any color for highlights and controls.</small></span>
+          <input class="accent-picker" id="accentPicker" type="color" value="#52d6b4" aria-label="Choose app accent color" />
+        </label>
+      </div>
+
+      <div class="settings-section">
+        <label class="switch-row" for="clockToggle">
+          <span><strong>12-hour clock</strong><small>Show timeline times with AM and PM.</small></span>
+          <input class="switch-control" id="clockToggle" type="checkbox" role="switch" aria-label="Use 12-hour time format" />
+        </label>
+      </div>
+
+      <div class="settings-section">
+        <p>Enjoying Weekz? Find me on Instagram or support my free tools on Ko-fi.</p>
+        <div class="support-actions">
+          <a class="support-link" href="https://www.instagram.com/gozavibez/" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">◎</span> Instagram</a>
+          <a class="support-link primary" href="https://ko-fi.com/brazylabz" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">☕</span> Buy me a coffee</a>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <button class="danger-btn" onclick="clearAllRoutines()">Clear All Routines</button>
+      </div>
+
+      <div class="settings-footer">
+        Weekz v0.3<br>
+        Made for better weeks
+      </div>
+
+      <div class="modal-actions" style="margin-top: 16px;">
+        <button class="btn-cancel" onclick="closeSettings()" style="flex:1">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+    let events = {
+      Monday: [
+        { id: 1, name: "Sleep", notes: "Aim for 7+ hours", start: "00:00", end: "07:00", color: "#6366f1" },
+        { id: 2, name: "Breakfast", notes: "", start: "08:00", end: "08:45", color: "#f59e0b" },
+        { id: 3, name: "Deep Work", notes: "Focus block – no phone", start: "09:00", end: "12:00", color: "#3b82f6" },
+        { id: 4, name: "Gym", notes: "Upper body", start: "17:30", end: "18:45", color: "#10b981" }
+      ],
+      Tuesday: [
+        { id: 5, name: "Sleep", notes: "", start: "00:00", end: "07:30", color: "#6366f1" },
+        { id: 6, name: "Classes", notes: "", start: "10:00", end: "14:00", color: "#8b5cf6" }
+      ],
+      Wednesday: [],
+      Thursday: [],
+      Friday: [
+        { id: 7, name: "Sleep", notes: "", start: "00:00", end: "08:00", color: "#6366f1" },
+        { id: 8, name: "Project Time", notes: "Creative work", start: "14:00", end: "18:00", color: "#ec4899" }
+      ],
+      Saturday: [],
+      Sunday: []
+    };
+
+    let currentDay = null;
+    let editingId = null;
+    let nextId = 20;
+    const STORAGE_KEY = "weekz-routine-settings-v1";
+    const DEFAULT_ACCENT = "#52d6b4";
+    const DEFAULT_BACKDROP = "midnight";
+    let accentColor = DEFAULT_ACCENT;
+    let backdropStyle = DEFAULT_BACKDROP;
+    let timeFormat = "24h";
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[char]));
+    }
+
+    function safeColor(value) {
+      return /^#[\da-f]{6}$/i.test(String(value || "")) ? value : DEFAULT_ACCENT;
+    }
+
+    function applyAccent(color) {
+      accentColor = safeColor(color);
+      const root = document.documentElement;
+      root.style.setProperty("--accent", accentColor);
+      root.style.setProperty("--accent-soft", `${accentColor}24`);
+      root.style.setProperty("--accent-line", `${accentColor}88`);
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", backdropStyle === "aqua" ? "#12302e" : "#0b1020");
+      const picker = document.getElementById("accentPicker");
+      if (picker) picker.value = accentColor;
+      const eventColor = document.getElementById("modalColor");
+      if (eventColor && editingId === null) eventColor.value = accentColor;
+    }
+
+    function saveAppData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ events, accentColor, backdropStyle, timeFormat }));
+      } catch (error) {
+        console.warn("Weekz could not save this routine.", error);
+      }
+    }
+
+    function loadAppData() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved && saved.events && typeof saved.events === "object") {
+          days.forEach(day => {
+            if (Array.isArray(saved.events[day])) events[day] = saved.events[day];
+          });
+          const largestId = days.flatMap(day => events[day]).reduce((max, event) => Math.max(max, Number(event.id) || 0), 0);
+          nextId = Math.max(nextId, largestId + 1);
+        }
+        if (saved?.accentColor) accentColor = safeColor(saved.accentColor);
+        if (saved?.backdropStyle === "aqua" || saved?.backdropStyle === "midnight") backdropStyle = saved.backdropStyle;
+        if (saved?.timeFormat === "12h" || saved?.timeFormat === "24h") timeFormat = saved.timeFormat;
+      } catch (error) {
+        console.warn("Weekz could not load the saved routine.", error);
+      }
+      applyAccent(accentColor);
+      applyBackdrop(backdropStyle);
+    }
+
+    function applyBackdrop(style) {
+      backdropStyle = style === "aqua" ? "aqua" : DEFAULT_BACKDROP;
+      document.documentElement.dataset.backdrop = backdropStyle;
+      const picker = document.getElementById("backdropPicker");
+      if (picker) picker.value = backdropStyle;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", backdropStyle === "aqua" ? "#12302e" : "#0b1020");
+    }
+
+    function init() {
+      loadAppData();
+      renderWeek();
+      drawHourLines();
+      document.getElementById("accentPicker").addEventListener("input", event => {
+        applyAccent(event.target.value);
+        saveAppData();
+      });
+      const clockToggle = document.getElementById("clockToggle");
+      clockToggle.checked = timeFormat === "12h";
+      clockToggle.addEventListener("change", () => {
+        timeFormat = clockToggle.checked ? "12h" : "24h";
+        saveAppData();
+        drawHourLines();
+        if (currentDay) renderEvents();
+      });
+    }
+
+    function formatTime(value, compact = false) {
+      const [hourText, minuteText = "00"] = String(value || "00:00").split(":");
+      const hour = Number(hourText) || 0;
+      const minute = String(minuteText).padStart(2, "0");
+      if (timeFormat !== "12h") return `${String(hour).padStart(2, "0")}:${minute}`;
+      const suffix = hour >= 12 ? "PM" : "AM";
+      const twelveHour = hour % 12 || 12;
+      const minutePart = compact && minute === "00" ? "" : `:${minute}`;
+      return `${twelveHour}${minutePart} ${suffix}`;
+    }
+
+    function renderWeek() {
+      const container = document.getElementById("weekView");
+      container.innerHTML = "";
+
+      days.forEach((day) => {
+        const card = document.createElement("div");
+        card.className = "day-card";
+        card.setAttribute("role", "button");
+        card.setAttribute("tabindex", "0");
+        card.setAttribute("aria-label", `${day}, ${(events[day] || []).length} routine events`);
+        card.onclick = () => openDay(day);
+        card.onkeydown = event => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openDay(day);
+          }
+        };
+
+        const dayEvents = events[day] || [];
+        let preview = "";
+        dayEvents.slice(0, 3).forEach(ev => {
+          preview += `<div class="preview-event" style="background:${safeColor(ev.color)}">${escapeHTML(ev.name)}</div>`;
+        });
+        if (dayEvents.length > 3) {
+          preview += `<div style="color:var(--muted);font-size:0.75rem;padding-left:4px;">+${dayEvents.length - 3} more</div>`;
+        }
+
+        card.innerHTML = `
+          <div class="day-name" data-count="${dayEvents.length ? `${dayEvents.length} ${dayEvents.length === 1 ? "event" : "events"}` : ""}">${day}</div>
+          <div class="day-preview">
+            ${preview || '<span class="day-empty">No routine yet</span>'}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function drawHourLines() {
+      const container = document.getElementById("hourLines");
+      container.innerHTML = "";
+      for (let h = 0; h <= 24; h++) {
+        const line = document.createElement("div");
+        line.className = "hour-line";
+        line.style.top = (h * 30) + "px";
+        container.appendChild(line);
+
+        if (h < 24) {
+          const label = document.createElement("div");
+          label.className = "hour-label";
+          label.style.top = (h * 30) + "px";
+          label.textContent = formatTime(`${String(h).padStart(2, "0")}:00`, true);
+          container.appendChild(label);
+        }
+      }
+    }
+
+    function openDay(day) {
+      currentDay = day;
+      document.body.classList.add("day-open");
+      document.getElementById("weekView").style.display = "none";
+      document.getElementById("dayDetail").classList.add("visible");
+      document.getElementById("detailTitle").textContent = day;
+      renderEvents();
+    }
+
+    function closeDay() {
+      currentDay = null;
+      document.body.classList.remove("day-open");
+      document.getElementById("dayDetail").classList.remove("visible");
+      document.getElementById("weekView").style.display = "grid";
+      renderWeek();
+    }
+
+    function timeToMinutes(t) {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function renderEvents() {
+      const layer = document.getElementById("eventsLayer");
+      layer.innerHTML = "";
+      const dayEvents = events[currentDay] || [];
+
+      dayEvents.forEach(ev => {
+        let startMin = timeToMinutes(ev.start);
+        let endMin = timeToMinutes(ev.end);
+        if (ev.end === "24:00" || endMin <= startMin) endMin = 24 * 60;
+
+        const top = (startMin / 60) * 30;
+        const height = Math.max(((endMin - startMin) / 60) * 30, 22);
+
+        const block = document.createElement("div");
+        block.className = "event-block";
+        block.style.top = top + "px";
+        block.style.height = height + "px";
+        block.style.background = safeColor(ev.color);
+        block.innerHTML = `
+          <div>${escapeHTML(ev.name)}</div>
+          <div class="event-time">${escapeHTML(formatTime(ev.start))} – ${escapeHTML(formatTime(ev.end))}</div>
+        `;
+        block.onclick = (e) => {
+          e.stopPropagation();
+          openEditModal(ev);
+        };
+        layer.appendChild(block);
+      });
+    }
+
+    // ===== EDIT MODAL =====
+    function openAddModal() {
+      editingId = null;
+      document.getElementById("modalTitle").textContent = "Add to Routine";
+      document.getElementById("modalName").value = "";
+      document.getElementById("modalNotes").value = "";
+      document.getElementById("modalStart").value = "09:00";
+      document.getElementById("modalEnd").value = "10:00";
+      document.getElementById("modalColor").value = accentColor;
+      document.getElementById("deleteBtn").style.display = "none";
+      document.getElementById("editModal").classList.add("visible");
+    }
+
+    function openEditModal(ev) {
+      editingId = ev.id;
+      document.getElementById("modalTitle").textContent = "Edit Event";
+      document.getElementById("modalName").value = ev.name;
+      document.getElementById("modalNotes").value = ev.notes || "";
+      document.getElementById("modalStart").value = ev.start;
+      document.getElementById("modalEnd").value = ev.end;
+      document.getElementById("modalColor").value = ev.color;
+      document.getElementById("deleteBtn").style.display = "block";
+      document.getElementById("editModal").classList.add("visible");
+    }
+
+    function closeEditModal() {
+      document.getElementById("editModal").classList.remove("visible");
+    }
+
+    function saveEvent() {
+      const name = document.getElementById("modalName").value.trim();
+      const notes = document.getElementById("modalNotes").value.trim();
+      const start = document.getElementById("modalStart").value;
+      const end = document.getElementById("modalEnd").value;
+      const color = document.getElementById("modalColor").value;
+
+      if (!name) {
+        alert("Please enter a name");
+        return;
+      }
+
+      if (!events[currentDay]) events[currentDay] = [];
+
+      if (editingId === null) {
+        events[currentDay].push({
+          id: nextId++,
+          name, notes, start, end, color
+        });
+      } else {
+        const ev = events[currentDay].find(e => e.id === editingId);
+        if (ev) {
+          ev.name = name;
+          ev.notes = notes;
+          ev.start = start;
+          ev.end = end;
+          ev.color = color;
+        }
+      }
+
+      closeEditModal();
+      saveAppData();
+      renderEvents();
+      renderWeek();
+    }
+
+    function deleteEvent() {
+      if (!confirm("Remove this from your routine?")) return;
+      events[currentDay] = events[currentDay].filter(e => e.id !== editingId);
+      closeEditModal();
+      saveAppData();
+      renderEvents();
+      renderWeek();
+    }
+
+    // ===== SETTINGS =====
+    function openSettings() {
+      document.getElementById("settingsModal").classList.add("visible");
+    }
+
+    function closeSettings() {
+      document.getElementById("settingsModal").classList.remove("visible");
+    }
+
+    document.getElementById("backdropPicker").addEventListener("change", (event) => {
+      applyBackdrop(event.target.value);
+      saveAppData();
+    });
+
+    function clearAllRoutines() {
+      if (!confirm("This will delete all your weekly routines. Are you sure?")) return;
+      days.forEach(day => events[day] = []);
+      saveAppData();
+      closeSettings();
+      renderWeek();
+      if (currentDay) renderEvents();
+    }
+
+    // Close modals when clicking outside
+    document.getElementById("editModal").addEventListener("click", (e) => {
+      if (e.target.id === "editModal") closeEditModal();
+    });
+    document.getElementById("settingsModal").addEventListener("click", (e) => {
+      if (e.target.id === "settingsModal") closeSettings();
+    });
+
+    init();
+
+    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(error => {
+          console.warn("Weekz could not enable offline support.", error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
